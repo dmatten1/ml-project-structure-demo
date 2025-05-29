@@ -55,7 +55,7 @@ def clean(csv):
             df.dropna(subset=['ach_level'], inplace=True)
             df['ach_level'] = df['ach_level'].astype(int)
             
-            #4 combine them
+            #4 combine them into a master
             
             ##DO FOR ALL OTHER ONES
 
