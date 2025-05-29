@@ -4,6 +4,7 @@ dataname: iris
 datarawdirectory: data/raw/
 datainterimdirectory: data/interim/
 dataprocesseddirectory: data/processed/
+mountedremotepath: "/Users/danielmatten/Desktop/actual_dataplus/Data/Student"
 
 # MODELS
 modelpath: models/model.pkl
