@@ -7,7 +7,7 @@ download:
 
 # Preprocess the data
 preprocess:
-	python -m src.preprocess.build_features
+	python -m src.preprocess.my_build_features
 
 clean:
 	python -m src.preprocess.combining
