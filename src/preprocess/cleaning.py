@@ -3,9 +3,20 @@ import pandas as pd
 from glob import glob
 import re
 from sklearn.preprocessing import MultiLabelBinarizer
+from dateutil.parser import parse
 
 raw_data_path = "data/raw"
 
+def fast_parse_dates(series):
+    # Try general parse first (fastest)
+    parsed = pd.to_datetime(series, errors='coerce')
+
+    # Optionally: fallback to common format if still missing
+    fallback = pd.to_datetime(series, format='%m/%d/%Y', errors='coerce')
+    parsed = parsed.fillna(fallback)
+
+    return parsed.dt.year
+    
 # Step 1: Get all CSV files that contain either 'curtest' or 'collegeboard'
 csv_files = [
     f for f in glob(os.path.join(raw_data_path, "*.csv"))
@@ -19,8 +30,37 @@ curtest_files = [f for f in csv_files if os.path.basename(f).startswith("curtest
 # Step 3: Load and clean each group
 
 def clean_group_gpa(file_list):
+    # Read all CSVs in the file list into DataFrames
+    dfs = [pd.read_csv(f) for f in file_list]
+
+    # Concatenate into one DataFrame
+    gpa_master = pd.concat(dfs, ignore_index=True)
+
+    # Decode any string that looks like a byte string (e.g., "b'some value'")
+    gpa_master = gpa_master.map(lambda x: x[2:-1] if isinstance(x, str) and x.startswith("b'") and x.endswith("'") else x)
+    # Combine the columns, prioritizing non-null values in 'bound_for'
+    gpa_master['bound_for_combined'] = gpa_master['bound_for'].combine_first(gpa_master['BOUND_FOR'])
+
+    # Drop the original columns
+    gpa_master.drop(columns=['bound_for', 'BOUND_FOR'], inplace=True)
+
+    # Rename to a standard name (optional)
+    gpa_master.rename(columns={'bound_for_combined': 'bound_for'}, inplace=True)
+
+
+    gpa_master.drop(columns=['DIPLOMA_MET','UNWEIGHTED_RANK_DATE','WEIGHTED_RANK_DATE','diploma_type','DIPLOMA_TYPE'], inplace=True)
+
+
+    gpa_master['entry_year'] = fast_parse_dates(gpa_master['NINTHGRADEENTRY'])
+    gpa_master['grad_year'] = fast_parse_dates(gpa_master['DIPLOMA_ISSUED'])
+
+
+    gpa_master.drop(columns=['NINTHGRADEENTRY','DIPLOMA_ISSUED'],inplace=True)
+    gpa_master.dropna(inplace=True)
+    gpa_master = gpa_master[(gpa_master['gpa_unweighted'] <= 4) & (gpa_master['gpa_weighted'] <= 6)]
+    gpa_master = gpa_master[(gpa_master['entry_year'] < 2030)]      
     
-    return df;
+    return gpa_master;
 
 def clean_group_collegeboard(file_list):
     cleaned_dfs = []
