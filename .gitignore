@@ -92,3 +92,4 @@ target/
 # Other
 .vscode/
 data/raw/
+data/processed/

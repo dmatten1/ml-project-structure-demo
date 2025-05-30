@@ -214,10 +214,14 @@ def clean_group_curtest(file_list):
     curtest_master = curtest_master[curtest_master['testid_year'].isin(valid_combos)]
 
     # Add percentile rank
+    # Convert scores to numeric (strings will become NaN)
+    curtest_master['score'] = pd.to_numeric(curtest_master['score'], errors='coerce')
+
+    # Now apply the ranking
     curtest_master['percentile'] = curtest_master.groupby(['test_id', 'year'])['score'] \
         .transform(lambda x: x.rank(pct=True) * 100)
 
-    # One-hot encode accomm_list
+        # One-hot encode accomm_list
     curtest_master['accomm_list'] = (
         curtest_master['accomm_list']
         .fillna('')
