@@ -7,11 +7,10 @@ download:
 
 # Preprocess the data
 preprocess:
-	python -m src.preprocess.my_build_features
+	
 
 clean:
-	python -m src.preprocess.combining
-	python -m src.preprocess.master_cleaning
+	python -m src.preprocess.cleaning
 
 # Train the model
 train:
