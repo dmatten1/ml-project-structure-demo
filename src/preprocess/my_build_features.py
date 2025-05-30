@@ -55,6 +55,7 @@ def clean(csv):
             df.dropna(subset=['ach_level'], inplace=True)
             df['ach_level'] = df['ach_level'].astype(int)
     elif "collegeboard" in base_name:
+        years    = [2018, 2019, 2020, 2021, 2022]
         # map typo’d names → correct names
         rename_map = {
         'sat_erw_score_hc': 'sat_ebrw_score_hc',
