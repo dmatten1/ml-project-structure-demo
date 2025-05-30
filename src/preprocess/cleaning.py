@@ -269,7 +269,9 @@ def recode_ach_level(val):
 
 gpa_master = clean_group_gpa(gpa_files)
 collegeboard_master = clean_group_collegeboard(collegeboard_files)
+curtest_master = clean_group_curtest(curtest_files)
 
 #Save 
 gpa_master.to_csv("data/processed/gpa_master.csv", index=False)
 collegeboard_master.to_csv("data/processed/collegeboard_master.csv", index=False)
+curtest_master.to_csv("data/processed/curtest_master.csv", index=False)
