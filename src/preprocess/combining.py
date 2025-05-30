@@ -39,7 +39,7 @@ if __name__ == "__main__":
     os.makedirs(combined_output_path, exist_ok=True)
 
     # Set your keywords here
-    keywords = ["curtest", "transcripts","attendance","grad","collegeboard","mergedemo","mastdrop","mastsusp"]
+    keywords = ["curtest", "transcripts","attendance","grad","mergedemo","mastdrop","mastsusp"]
 
     all_cleaned_files = glob(os.path.join(cleaned_data_path, "*.csv"))
     grouped_files = group_files_by_keyword(all_cleaned_files, keywords)
