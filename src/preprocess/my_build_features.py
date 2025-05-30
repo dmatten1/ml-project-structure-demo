@@ -1,7 +1,7 @@
 import src.common.tools as tools
 import src.data.dataio as dataio
 import os
-import glob
+from glob import glob
 import pandas as pd
 import re
 
@@ -161,7 +161,10 @@ if __name__ == "__main__":
 
     os.makedirs(interim_data_path, exist_ok=True)
 
-    csv_files = glob(os.path.join(raw_data_path, "*.csv"))
+    csv_files = [
+    f for f in glob(os.path.join(raw_data_path, "*.csv"))
+    if "curtest" in os.path.basename(f) or "collegeboard" in os.path.basename(f) 
+] # this is ONLY FOR TESTING!!!!! CHANGE LATER
 
     for csv_file in csv_files:
         print(f"Processing: {csv_file}")

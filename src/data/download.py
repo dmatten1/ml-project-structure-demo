@@ -19,11 +19,13 @@ if __name__ == "__main__":
     sas_files = glob(os.path.join(smb_mount_path, "*.sas7bdat"))
 
     for sas_file in sas_files:
-        print(f"Processing: {sas_file}")
-        df = load_sas_to_df(sas_file)
+        base_name = os.path.basename(sas_file).lower()
+        if "curtest" in base_name or "collegeboard" in base_name:
+            print(f"Processing: {sas_file}")
+            df = load_sas_to_df(sas_file)
 
-        # Save to CSV
-        base_name = os.path.splitext(os.path.basename(sas_file))[0]
-        csv_path = os.path.join(config["datarawdirectory"], f"{base_name}.csv")
-        df.to_csv(csv_path, index=False)
-        print(f"Saved CSV to: {csv_path}")
+            # Save to CSV
+            base_name = os.path.splitext(os.path.basename(sas_file))[0]
+            csv_path = os.path.join(config["datarawdirectory"], f"{base_name}.csv")
+            df.to_csv(csv_path, index=False)
+            print(f"Saved CSV to: {csv_path}")
