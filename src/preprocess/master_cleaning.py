@@ -89,6 +89,9 @@ def clean(csv):
         #now resave it!
         cleaned_df = pivot_percentile
         output_name = "curtest_master.csv"
+        output_path = os.path.join(config["datacleandirectory"], output_name)
+        cleaned_df.to_csv(output_path, index=False)
+        print(f"Saved cleaned file to {output_path}")
         
     #PUT OTHER FILES HERE
         
@@ -97,6 +100,4 @@ def clean(csv):
         
         
         
-    output_path = os.path.join(config["datacleandirectory"], output_name)
-    cleaned_df.to_csv(output_path, index=False)
-    print(f"Saved cleaned file to {output_path}")
+   
