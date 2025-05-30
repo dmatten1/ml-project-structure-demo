@@ -23,7 +23,100 @@ def clean_group_gpa(file_list):
     return df;
 
 def clean_group_collegeboard(file_list):
-    ;
+    cleaned_dfs = []
+
+    # 1) discover the union of columns, in order of appearance
+    rename_map = {
+        'sat_erw_score_hc': 'sat_ebrw_score_hc',
+        'sat_erw_score_mr': 'sat_ebrw_score_mr',
+        'sat_ctsh_ss_mc':   'sat_ctsh_ss_hc',
+        'ital':             'italgr'
+    }
+    all_cols = []
+    for path in sorted(file_list):
+        hdr = pd.read_csv(path, nrows=0)
+        cols = (
+            hdr.columns
+               .str.strip()
+               .str.lower()
+               .str.replace(" ", "_")
+               .map(lambda c: rename_map.get(c, c))
+        )
+        for c in cols:
+            if c not in all_cols:
+                all_cols.append(c)
+
+    # 2) load & clean each file, align to all_cols
+    for path in sorted(file_list):
+        df = pd.read_csv(path, low_memory=False)
+
+        # normalize & rename
+        df.columns = (
+            df.columns
+               .str.strip()
+               .str.lower()
+               .str.replace(" ", "_")
+        )
+        df.rename(columns=rename_map, inplace=True)
+
+        # drop dupes, align to the same column set
+        df = df.loc[:, ~df.columns.duplicated()]
+        df = df.reindex(columns=all_cols)
+
+        cleaned_dfs.append(df)
+
+    # 3) concatenate & post‐process
+    collegeboard_master = pd.concat(cleaned_dfs, ignore_index=True)
+
+    # strip whitespace in LEA
+    if 'lea' in collegeboard_master:
+        collegeboard_master['lea'] = collegeboard_master['lea'].astype(str).str.strip()
+
+    # round floats → nullable Int
+    float_cols = collegeboard_master.select_dtypes(include='float').columns
+    collegeboard_master[float_cols] = (
+        collegeboard_master[float_cols]
+        .round()
+        .astype('Int64')
+    )
+
+    # parse dates
+    for col in collegeboard_master:
+        if col in ['birthdt', 'grad_date'] or col.endswith('_dt'):
+            collegeboard_master[col] = pd.to_datetime(
+                collegeboard_master[col], errors='coerce'
+            )
+
+    # categorical flags
+    for col in ['sex', 'ethnic', 'blang', 'lea', 'instname']:
+        if col in collegeboard_master:
+            collegeboard_master[col] = collegeboard_master[col].astype('category')
+
+    # drop any SAT‐essay columns
+    for essay_col in [
+        'sat_er_hc','sat_er_mr',
+        'sat_ea_hc','sat_ea_mr',
+        'sat_ew_hc','sat_ew_mr'
+    ]:
+        if essay_col in collegeboard_master:
+            collegeboard_master.drop(columns=essay_col, inplace=True)
+
+    # zero‐pad school code & build unique id
+    if 'schlcode' in collegeboard_master:
+        collegeboard_master['schlcode'] = (
+            collegeboard_master['schlcode']
+            .astype(str)
+            .str.zfill(3)
+        )
+    if {'lea','schlcode'}.issubset(collegeboard_master.columns):
+        collegeboard_master['unique_identifier'] = (
+            collegeboard_master['lea'].astype(str)
+            + '-'
+            + collegeboard_master['schlcode']
+        )
+
+    return collegeboard_master
+
 
 
 def clean_group_curtest(file_list):
