@@ -65,8 +65,6 @@ def clean_group_gpa(file_list):
     return gpa_master
 
 def clean_group_demographics(file_list):
-    dfs = [pd.read_csv(f) for f in file_list]
-    # 1) Build the “first‐seen” list of columns, then keep only those that appear in every file
     common_cols = None
     for path in sorted(file_list):
         # Read just the header row
@@ -348,10 +346,10 @@ def recode_ach_level(val):
 ##need a master for each group and a save
 
 ##\gpa_master = clean_group_gpa(gpa_files)
-#collegeboard_master = clean_group_collegeboard(collegeboard_files)
+collegeboard_master = clean_group_collegeboard(collegeboard_files)
 curtest_master = clean_group_curtest(curtest_files)
 
 #Save 
 #gpa_master.to_csv("data/processed/gpa_master.csv", index=False)
-#collegeboard_master.to_csv("data/processed/collegeboard_master.csv", index=False)
+collegeboard_master.to_csv("data/processed/collegeboard_master.csv", index=False)
 curtest_master.to_csv("data/processed/curtest_master.csv", index=False)

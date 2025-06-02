@@ -11,7 +11,7 @@ def clean(csv):
     config = tools.load_config()
     base_name = os.path.basename(csv).lower()
     df = pd.read_csv(csv)
-    
+        
     if "curtest" in base_name:
         curtest_master = df
         # Step 1: Count unique LEA values per mastid
@@ -91,6 +91,35 @@ def clean(csv):
         output_name = "curtest_master.csv"
         output_path = os.path.join(config["datacleandirectory"], output_name)
         cleaned_df.to_csv(output_path, index=False)
+        print(f"Saved cleaned file to {output_path}")
+    elif "collegeboard" in base_name:
+        collegeboard_master = df
+        lea_counts = df.groupby('mastid')['lea'].nunique()
+
+        # Step 2: Keep only those mastids that map to exactly one LEA
+        consistent_mastids = lea_counts[lea_counts == 1].index
+        collegeboard_master = collegeboard_master[collegeboard_master['mastid'].isin(consistent_mastids)]
+
+        # Step 3: Check for missing mastids (just for reporting)
+        num_missing_mastids = collegeboard_master['mastid'].isnull().sum()
+        print(f"Number of missing mastids after filtering: {num_missing_mastids}")
+
+        # Step 4: Drop duplicate mastids (keep the first occurrence)
+        collegeboard_master = collegeboard_master.drop_duplicates(subset='mastid')
+
+        # Step 5: Keep only columns with >50% non-missing values
+        threshold = len(df) * 0.5
+        cols_to_keep = [
+            col
+            for col in df.columns
+            if df[col].notnull().sum() > threshold
+        ]
+        collegeboard_master = collegeboard_master[cols_to_keep]
+
+        # Step 6: Save to CSV (use df, not cleaned_df)
+        output_name = "collegeboard_master.csv"
+        output_path = os.path.join(config["datacleandirectory"], output_name)
+        collegeboard_master.to_csv(output_path, index=False)
         print(f"Saved cleaned file to {output_path}")
         
     #PUT OTHER FILES HERE
