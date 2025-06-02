@@ -4,7 +4,7 @@ dataname: iris
 datarawdirectory: data/raw/
 datainterimdirectory: data/interim/
 dataprocesseddirectory: data/processed/
-mountedremotepath: "/Users/danielmatten/Desktop/actual_dataplus/Data/Student"
+mountedremotepath: "/Users/adamcartwright/ml-project-structure-demo/data/raw"
 
 # MODELS
 modelpath: models/model.pkl
