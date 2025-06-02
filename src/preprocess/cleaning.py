@@ -163,8 +163,9 @@ def clean_group_curtest(file_list):
     cleaned_dfs = []
 
     for file in file_list:
+        print("doing" + file)
         df = pd.read_csv(file)
-
+        df = df.map(lambda x: x[2:-1] if isinstance(x, str) and x.startswith("b'") and x.endswith("'") else x)
         # Drop rows with missing mastid
         if 'mastid' in df.columns:
             df = df.dropna(subset=['mastid'])
@@ -271,11 +272,11 @@ def recode_ach_level(val):
     
 ##need a master for each group and a save
 
-gpa_master = clean_group_gpa(gpa_files)
-collegeboard_master = clean_group_collegeboard(collegeboard_files)
+##\gpa_master = clean_group_gpa(gpa_files)
+#collegeboard_master = clean_group_collegeboard(collegeboard_files)
 curtest_master = clean_group_curtest(curtest_files)
 
 #Save 
-gpa_master.to_csv("data/processed/gpa_master.csv", index=False)
-collegeboard_master.to_csv("data/processed/collegeboard_master.csv", index=False)
+#gpa_master.to_csv("data/processed/gpa_master.csv", index=False)
+#collegeboard_master.to_csv("data/processed/collegeboard_master.csv", index=False)
 curtest_master.to_csv("data/processed/curtest_master.csv", index=False)
