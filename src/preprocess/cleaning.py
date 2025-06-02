@@ -26,6 +26,8 @@ csv_files = [
 gpa_files = [f for f in csv_files if os.path.basename(f).startswith("gpa")]
 collegeboard_files = [f for f in csv_files if os.path.basename(f).startswith("collegeboard")]
 curtest_files = [f for f in csv_files if os.path.basename(f).startswith("curtest")]
+demographics_files = [f for f in csv_files if os.path.basename(f).startswith("mergedemo")]
+
 
 # Step 3: Load and clean each group
 
@@ -60,8 +62,81 @@ def clean_group_gpa(file_list):
     gpa_master = gpa_master[(gpa_master['gpa_unweighted'] <= 4) & (gpa_master['gpa_weighted'] <= 6)]
     gpa_master = gpa_master[(gpa_master['entry_year'] < 2030)]      
     
-    return gpa_master;
+    return gpa_master
 
+def clean_group_demographics(file_list):
+    dfs = [pd.read_csv(f) for f in file_list]
+    # 1) Build the “first‐seen” list of columns, then keep only those that appear in every file
+    common_cols = None
+    for path in sorted(file_list):
+        # Read just the header row
+        hdr = pd.read_csv(path, nrows=0)
+        
+        # Normalize: strip whitespace, lowercase, replace spaces with underscores
+        cols = (
+            hdr.columns
+               .str.strip()
+               .str.lower()
+               .str.replace(" ", "_")
+        )
+        
+        if common_cols is None:
+            # On the very first file, initialize common_cols to all of its normalized columns
+            common_cols = list(cols)
+        else:
+            # For each subsequent file, keep only those names that are still in common_cols
+            cols_set = set(cols)
+            common_cols = [c for c in common_cols if c in cols_set]
+    
+    # Now 'common_cols' is a list of normalized column names that appear in every file,
+    # in the order they first showed up in the first CSV’s header.
+
+    # 2) Load each DataFrame a second time, normalize its columns, then subset to common_cols
+    cleaned_dfs = []
+    for path in sorted(file_list):
+        df = pd.read_csv(path)
+        
+        # Normalize this file’s column names exactly the same way
+        df.columns = (
+            df.columns
+               .str.strip()
+               .str.lower()
+               .str.replace(" ", "_")
+        )
+        
+        # Subset to only the columns in the intersection
+        df = df.reindex(columns=common_cols)
+        
+        cleaned_dfs.append(df)
+    
+    # 3) Concatenate all cleaned DataFrames into one master table
+    demographics_master = pd.concat(cleaned_dfs, ignore_index=True)
+    
+    demographics_master['mastid'] = (
+    demographics_master['mastid']
+    .round(0)
+    .astype(int)
+    )
+    
+    demographics_master['reporting_year'] = (
+    demographics_master['reporting_year']
+    .round(0)
+    .astype(int)
+    )
+    
+    # 4) Ensure `lea` and `schlcode` are strings (for concatenation)
+    demographics_master['lea'] = demographics_master['lea'].astype(str).str.strip()
+    demographics_master['schlcode'] = demographics_master['schlcode'].astype(str).str.zfill(3)
+
+    # 5) Create `unique_identifier` by concatenating `lea` and `schlcode`
+    demographics_master['unique_identifier'] = (
+        demographics_master['lea'] + '-' + demographics_master['schlcode']
+    )
+    demographics_master.dropna(inplace=True)
+    return demographics_master
+    
+
+    
 def clean_group_collegeboard(file_list):
     cleaned_dfs = []
 

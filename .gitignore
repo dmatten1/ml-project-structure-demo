@@ -93,3 +93,4 @@ target/
 .vscode/
 data/raw/
 data/processed/
+*.sas7bdat
