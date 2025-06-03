@@ -93,40 +93,59 @@ def clean(csv):
         cleaned_df.to_csv(output_path, index=False)
         print(f"Saved cleaned file to {output_path}")
     elif "collegeboard" in base_name:
-        collegeboard_master = df
-        lea_counts = df.groupby('mastid')['lea'].nunique()
+        df = pd.read_csv(
+            csv,
+            na_values=["<Nan>", "<nan>", "nan", "NA", "<NA>", ""],
+            keep_default_na=True
+        )
 
+        # 2) Sometimes there’s stray whitespace around these placeholders.  
+        #    So standardize “blank‐looking” cells to real NaN.
+        for col in ['birthdt', 'schlcode', 'lea']:
+            # 2a) strip out any pure-whitespace → NaN
+            df[col].replace(r'^\s*$', np.nan, regex=True, inplace=True)
+            # 2b) convert any lingering literal strings “nan” or “<NA>” → NaN
+            df[col].replace(
+                to_replace=[r'^(nan|<NA>|NA)$'],   # exactly “nan” or “<NA>” or “NA”
+                value=np.nan,
+                regex=True,
+                inplace=True
+            )
+
+        # 3) Now drop rows missing any of those three
+        df = df.dropna(subset=['birthdt', 'schlcode', 'lea'])
+        
+        collegeboard_master = df.copy()
+        # Step 1: Count unique LEA values per mastid
+        lea_counts = collegeboard_master.groupby('mastid')['lea'].nunique()
+        
         # Step 2: Keep only those mastids that map to exactly one LEA
         consistent_mastids = lea_counts[lea_counts == 1].index
         collegeboard_master = collegeboard_master[collegeboard_master['mastid'].isin(consistent_mastids)]
-
-        # Step 3: Check for missing mastids (just for reporting)
-        num_missing_mastids = collegeboard_master['mastid'].isnull().sum()
-        print(f"Number of missing mastids after filtering: {num_missing_mastids}")
 
         # Step 4: Drop duplicate mastids (keep the first occurrence)
         collegeboard_master = collegeboard_master.drop_duplicates(subset='mastid')
 
         # Step 5: Keep only columns with >50% non-missing values
-        threshold = len(df) * 0.5
+        threshold = len(collegeboard_master) * 0.5
         cols_to_keep = [
             col
-            for col in df.columns
-            if df[col].notnull().sum() > threshold
+            for col in collegeboard_master.columns
+            if collegeboard_master[col].notnull().sum() > threshold
         ]
         collegeboard_master = collegeboard_master[cols_to_keep]
 
-        # Step 6: Save to CSV (use df, not cleaned_df)
+        # Step 6: Save to CSV
         output_name = "collegeboard_master.csv"
         output_path = os.path.join(config["datacleandirectory"], output_name)
         collegeboard_master.to_csv(output_path, index=False)
         print(f"Saved cleaned file to {output_path}")
-        
-    #PUT OTHER FILES HERE
-        
-        
-        
-        
-        
-        
-   
+            
+        #PUT OTHER FILES HERE
+            
+            
+            
+            
+            
+            
+    
