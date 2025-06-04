@@ -17,7 +17,7 @@ def fast_parse_dates(series):
 
     return parsed.dt.year
     
-# Step 1: Get all CSV files that contain either 'curtest' or 'collegeboard'
+# Step 1: Get all CSV files
 csv_files = [
     f for f in glob(os.path.join(raw_data_path, "*.csv"))
 ]
@@ -27,10 +27,22 @@ gpa_files = [f for f in csv_files if os.path.basename(f).startswith("gpa")]
 collegeboard_files = [f for f in csv_files if os.path.basename(f).startswith("collegeboard")]
 curtest_files = [f for f in csv_files if os.path.basename(f).startswith("curtest")]
 demographics_files = [f for f in csv_files if os.path.basename(f).startswith("mergedemo")]
-
+transcript_files = [f for f in csv_files if os.path.basename(f).startswith("transcripts")]
+masterbuild_files = [f for f in csv_files if os.path.basename(f).startswith("masterbuild")]
 
 # Step 3: Load and clean each group
-
+def clean_transcripts(file_list):
+    dfs = [pd.read_csv(f) for f in file_list]
+    tr_master = pd.concat(dfs, ignore_index=True)
+     
+    tr_master = tr_master[["mastid", "lea", "schlcode", "GRADE","FINAL_MARK", "ACADEMIC_LEVEL_DESC"]]
+    tr_master = tr_master.map(lambda x: x[2:-1] if isinstance(x, str) and x.startswith('b') else x)
+    tr_master.dropna(inplace=True)
+    tr_master["ACADEMIC_LEVEL_DESC"] = tr_master["ACADEMIC_LEVEL_DESC"].apply(lambda x: x[4:])
+    
+    return tr_master
+     
+     
 def clean_group_gpa(file_list):
     # Read all CSVs in the file list into DataFrames
     dfs = [pd.read_csv(f) for f in file_list]
@@ -328,6 +340,12 @@ def clean_group_curtest(file_list):
 
     return curtest_master
 
+def clean_masterbuild(file_list):
+    dfs = [pd.read_csv(f) for f in file_list]
+
+    # Concatenate into one DataFrame
+    masterbuild_master = pd.concat(dfs, ignore_index=True)
+    return masterbuild_master
     
 def recode_ach_level(val):
     if pd.isna(val):
@@ -345,11 +363,16 @@ def recode_ach_level(val):
     
 ##need a master for each group and a save
 
-##\gpa_master = clean_group_gpa(gpa_files)
+gpa_master = clean_group_gpa(gpa_files)
 collegeboard_master = clean_group_collegeboard(collegeboard_files)
 curtest_master = clean_group_curtest(curtest_files)
+transcript_master = clean_transcripts(transcript_files)
+masterbuild_master = clean_masterbuild(masterbuild_files)
+#no real masterbuild cleaning here -- its in masterbuild.ipynb locally
 
 #Save 
-#gpa_master.to_csv("data/processed/gpa_master.csv", index=False)
+gpa_master.to_csv("data/processed/gpa_master.csv", index=False)
 collegeboard_master.to_csv("data/processed/collegeboard_master.csv", index=False)
 curtest_master.to_csv("data/processed/curtest_master.csv", index=False)
+transcript_master.to_csv("data/processed/transcript_master.csv", index=False)
+masterbuild_master.to_csv("data/processed/masterbuild_master.csv", index=False)
